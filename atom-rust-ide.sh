@@ -28,5 +28,5 @@ docker run \
 	-v atom-rust-ide-config:/home/atom/.atom \
 	-e DISPLAY=$DISPLAY  \
 	--name $IMAGE_NAME \
-	atom-rust-ide
+	sasol/atom-rust-ide
 
