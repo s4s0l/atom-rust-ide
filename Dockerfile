@@ -112,6 +112,7 @@ USER root
 ADD project /home/atom/project/
 ADD project /home/atom/project_template/
 ADD config.cson /home/atom/.atom/config.cson
+ADD styles.less /home/atom/.atom/styles.less
 ADD entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && chown -R atom:atom /home/atom && cp -R /home/atom/.atom /home/atom/.atom_template
 

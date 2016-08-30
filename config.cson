@@ -1,8 +1,10 @@
 "*":
+  "atom-webbrowser":
+    autoReopen: false
   racer:
     racerBinPath: "/home/atom/.cargo/bin/racer"
     rustSrcPath: "/rustsrc/src/"
   "rust-api-docs-helper":
     useInternalBrowser: true
-
-
+  welcome:
+    showOnStartup: false
