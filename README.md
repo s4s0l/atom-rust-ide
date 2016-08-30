@@ -16,6 +16,8 @@ You can also mount a project on your local filesystem:
 docker run -v /tmp/.X11-unix/:/tmp/.X11-unix/ -v /dev/shm:/dev/shm -v atom:/home/atom/.atom -v /path/to/your/project:/home/atom/project -e DISPLAY=$DISPLAY sasol/atom-rust-ide
 ```
 
+Beware that atom in container runs as user with uid=1000, so watch out for permissions
+
 ## Exposing display
 
 If you are getting errors like:
