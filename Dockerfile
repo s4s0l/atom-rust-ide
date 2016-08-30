@@ -8,6 +8,9 @@ ENV RUST_DOWNLOAD_URL=https://static.rust-lang.org/dist/$RUST_ARCHIVE
 ENV RUST_ARCHIVE_SRC=rustc-${RUST_VERSION}-src.tar.gz
 ENV RUST_DOWNLOAD_SRC=https://static.rust-lang.org/dist/$RUST_ARCHIVE_SRC
 ENV RUST_SRC_PATH=/rustsrc/src
+ENV GOSU_VERSION 1.9
+
+# SYSTEM INSTALLS
 
 RUN apt-get update && \
     apt-get install \
@@ -36,6 +39,21 @@ RUN apt-get update && \
        -qqy \
        --no-install-recommends
 
+RUN set -x \
+    && apt-get update && apt-get install -y --no-install-recommends ca-certificates wget && rm -rf /var/lib/apt/lists/* \
+    && dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
+    && wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch" \
+    && wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc" \
+    && export GNUPGHOME="$(mktemp -d)" \
+    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+    && gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
+    && rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc \
+    && chmod +x /usr/local/bin/gosu
+
+
+
+#RUST INSTALL
+
 RUN mkdir /rust && mkdir /rustsrc
 
 WORKDIR /rust
@@ -53,19 +71,13 @@ RUN curl -fsOSL $RUST_DOWNLOAD_SRC \
     && tar -C /rustsrc -xzf $RUST_ARCHIVE_SRC --strip-components=1 \
     && rm $RUST_ARCHIVE_SRC
 
+#ATOM INSTALLATION
 
 RUN curl -L https://github.com/atom/atom/releases/download/${ATOM_VERSION}/atom-amd64.deb > /tmp/atom.deb && \
     dpkg -i /tmp/atom.deb && \
-    rm -f /tmp/atom.deb && \
-    useradd -u 1000 -d /home/atom -m atom && \
-    mkdir -p /home/atom/project 	
+    rm -f /tmp/atom.deb
 
-ADD project /home/atom/project/
-ADD config.cson /home/atom/.atom/config.cson
-RUN chown -R atom /home/atom
-
-
-RUN    apt-get clean && \
+RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 
@@ -74,6 +86,10 @@ RUN    apt-get clean && \
 #	&& sed -i 's/BIG-REQUESTS/_IG-REQUESTS/' /usr/share/atom/libxcb.so.1
 
 
+
+RUN useradd -u 1000 -d /home/atom -m atom && \
+        mkdir -p /home/atom/project && \
+            mkdir -p /home/atom/project_template
 
 USER atom
 RUN cargo install racer
@@ -88,8 +104,20 @@ RUN apm install racer
 RUN apm install rust-api-docs-helper
 RUN apm install busy
 RUN apm install atom-browser-webview
-#RUN apm install atom-webview
+USER root
+
+
+
+
+ADD project /home/atom/project/
+ADD project /home/atom/project_template/
+ADD config.cson /home/atom/.atom/config.cson
+ADD entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh && chown -R atom:atom /home/atom && cp -R /home/atom/.atom /home/atom/.atom_template
+
 
 ENV USER=atom
-CMD ["/usr/bin/atom","-f", "/home/atom/project"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["atom", "/usr/bin/atom","-f", "/home/atom/project"]
+
 
